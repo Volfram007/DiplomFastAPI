@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi_login import LoginManager
 from sqlalchemy.orm import Session
-from models import User
+from starlette import status
+
+from models import User, ImageModel
 from database import get_db, SessionLocal
 from fastapi.templating import Jinja2Templates
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -23,7 +25,7 @@ manager.cookie_name = "auth_token"
 # Загрузка пользователя с использованием только имени пользователя
 @manager.user_loader
 def load_user(username: str):
-    db = SessionLocal()  # Создание новой сессии для получения пользователя
+    db = SessionLocal()  # Создание новой сессии базы данных
     user = db.query(User).filter(User.username == username).first()
     db.close()  # Закрытие сессии после запроса
     return user
@@ -65,15 +67,20 @@ async def authorization(
     message = None
 
     if form_act == "login":
+        print("authorization", form_act)
         user = load_user(username)
+        # user = db.query(User).filter(User.username == username).first()
+        print("authorization", user.username)
         if user and check_password_hash(user.password, password1):
-            response = RedirectResponse(url="/index", status_code=302)
+            response = RedirectResponse(url="/index", status_code=status.HTTP_302_FOUND)
             manager.set_cookie(
                 response, manager.create_access_token(data={"sub": username})
             )
+            print("return response")
             return response
         else:
             error = "Неверный логин или пароль"
+        print("authorization end")
     elif form_act == "register":
         if not username or not password1 or not password2:
             error = "Все поля обязательны для заполнения"
@@ -108,42 +115,60 @@ async def authorization(
 
 
 # Маршрут для выхода из системы
-@router.get("/logout")
-async def logout():
-    response = RedirectResponse(url="/authorization")
-    response.delete_cookie(manager.cookie_name)
-    return response
+# @router.get("/logout")
+# async def logout():
+#     response = RedirectResponse(url="/authorization")
+#     response.delete_cookie(manager.cookie_name)
+#     return response
 
 
 # Маршрут для отображения главной страницы
 @router.get("/index", response_class=HTMLResponse)
-async def index_page(
+async def index(
     request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(manager),
 ):
-    if current_user:
-        return templates.TemplateResponse(
-            "index.html",
-            {
-                "request": request,
-                "current_user": current_user,
-                "btnHomeVisible": True,
-                "btnAuthenticatedVisible": True,
-                "page_obj": [],  # Добавьте данные о фотографиях здесь
-                "page": 1,
-                "total_pages": 1,
-                "has_prev": False,
-                "has_next": False,
-                "AnonymousUser": None,
-            },
-        )
-    else:
-        return templates.TemplateResponse(
-            "index.html",
-            {
-                "request": request,
-                "current_user": None,
-                "AnonymousUser": "Пожалуйста, авторизуйтесь для доступа к альбому",
-            },
-        )
+    print("index")
+    # user = db.query(User).first()  # Для тестирования
+    # if not user:
+    #     return RedirectResponse(url="/register")
+    #
+    # images = db.query(ImageModel).filter_by(user_id=user.id).all()
+    return "<html><body><h1>Главная страница</h1></body></html>"
+
+
+# Маршрут для отображения главной страницы
+# @router.get("/index", response_class=HTMLResponse)
+# async def index_page(
+#     request: Request,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(manager),
+# ):
+#     print("index_page")
+#     if current_user:
+#         print("current_user")
+#         return templates.TemplateResponse(
+#             "index.html",
+#             {
+#                 "request": request,
+#                 "current_user": current_user,
+#                 "btnHomeVisible": True,
+#                 "btnAuthenticatedVisible": True,
+#                 "page_obj": [],  # Добавьте данные о фотографиях здесь
+#                 "page": 1,
+#                 "total_pages": 1,
+#                 "has_prev": False,
+#                 "has_next": False,
+#                 "AnonymousUser": None,
+#             },
+#         )
+#     else:
+#         return templates.TemplateResponse(
+#             "index.html",
+#             {
+#                 "request": request,
+#                 "current_user": None,
+#                 "AnonymousUser": "Пожалуйста, авторизуйтесь для доступа к альбому",
+#             },
+#         )

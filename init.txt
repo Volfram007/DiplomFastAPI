@@ -1,0 +1,39 @@
+** Клонируем проект **
+   Кнопка создания проекта "from Version Control"
+   Вкладка Repository URL > URL > https://github.com/***.git
+   В терминале:
+   python -m venv venv
+   .\venv\Scripts\activate
+   python.exe -m pip install --upgrade pip
+
+   Вкладка Project Structure (Ctrl+Alt+Shift+S)
+   Вкладка Project
+   SDK > Add Python SDK
+   > Existing environment > кнопка "..."
+   (Подтверждаем путь к папке с \venv\Scripts\python.exe)
+***********************
+
+** ЗАВИСИМОСТИ **
+    pip install fastapi uvicorn sqlalchemy[asyncio] aiosqlite asyncpg passlib python-multipart bcrypt
+
+fastapi-login bcrypt jinja2 python-multipart Alembic
+
+    pip freeze > requirements.txt
+
+    Удалите все пакеты, используя полученный список:
+    pip uninstall -r requirements.txt -y
+***********************
+
+** СОЗДАНИЕ БД **
+    alembic init -t async app/alembic
+    alembic revision --autogenerate
+    или alembic revision --autogenerate -m "Create images table"
+    alembic upgrade head
+
+***********************
+
+** Use Black formatter **
+	Settings -> Tools -> Black
+	On code reformat == chk
+	On save == chk
+***********************
